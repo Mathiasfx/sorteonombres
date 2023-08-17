@@ -11,12 +11,14 @@ function App() {
     const file = event.target.files[0];
     Papa.parse(file, {
       complete: (result) => {
-        setCsvData(result.data);
+        const validData = result.data.filter(item => item.Nombre && item.Apellido); // Filtrar campos vacíos
+        setCsvData(validData);
       },
-      header: true, // Si la primera fila del CSV contiene encabezados
-      delimiter: ";", // Especifica el delimitador (;) en tu CSV
+      header: true,
+      delimiter: ";",
     });
   };
+
   return (
     <>
       {csvData.length > 0 ? (

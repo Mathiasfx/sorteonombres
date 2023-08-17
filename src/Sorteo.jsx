@@ -7,10 +7,10 @@ import useWindowSize from "react-use/lib/useWindowSize";
 const Sorteo = ({ nombres, setCsvData }) => {
   const { width, height } = useWindowSize();
   const [isRendering, setIsRendering] = useState(true);
-  const [indexDel, setIndexDel] = useState(0);
-
-  const interval = 70;
+  const [nombresDisponibles, setNombresDisponibles] = useState([...nombres]);
+  const [nombresSeleccionados, setNombresSeleccionados] = useState([]);
   const [nombre, setNombre] = useState("");
+  const interval = 50;
 
   useEffect(() => {
     if (isRendering && nombres.length > 0) {
@@ -19,7 +19,7 @@ const Sorteo = ({ nombres, setCsvData }) => {
         const randomNombre = nombres[randomIndex]?.Nombre || "-";
         const randomApellido = nombres[randomIndex]?.Apellido || "-";
         setNombre(`${randomNombre} ${randomApellido}`);
-        setIndexDel(randomIndex);
+   
       }, interval);
       return () => clearInterval(i);
     }
@@ -27,35 +27,58 @@ const Sorteo = ({ nombres, setCsvData }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRendering, nombres, interval]);
 
-  useEffect(() => {
+  const seleccionarNombres = () => {
+    setIsRendering(!isRendering);
     if (isRendering) {
-      console.log(indexDel);
+      const nombresAleatorios = [];
+      const nombresRestantes = nombresDisponibles.filter((_, index) => !nombresSeleccionados.includes(index));
 
-      // Eliminar al ganador del arreglo de nombres
-      const updatedNombres = nombres.filter((_, index) => index !== indexDel);
-      setCsvData(updatedNombres);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      console.log(updatedNombres);
+      while (nombresAleatorios.length < 20 && nombresRestantes.length > 0) {
+        const randomIndex = Math.floor(Math.random() * nombresRestantes.length);
+        nombresAleatorios.push(nombresRestantes[randomIndex]);
+        nombresRestantes.splice(randomIndex, 1);
+      }
+
+      setNombresSeleccionados(nombresSeleccionados.concat(nombresAleatorios));
+
+      const updatedNombresDisponibles = nombresDisponibles.filter((_, index) => !nombresSeleccionados.includes(index));
+    
+      setCsvData(updatedNombresDisponibles);
+      setNombresDisponibles(updatedNombresDisponibles);
+  
+
+    
+     
     }
-  }, [isRendering]);
+  };
+
+  // useEffect(() => {
+  //   if (isRendering) {
+  //     const i = setInterval(seleccionarNombres, interval);
+  //     return () => clearInterval(i);
+  //   }
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [isRendering, nombresSeleccionados, interval]);
 
   return (
     <div>
-      <Confetti
-        style={!isRendering ? { display: "block" } : { display: "none" }}
-        width={width}
-        height={height}
-      />
-      <div className="contenedorNombre">
-        <h2 className="names">{isRendering ? nombre : nombre}</h2>
-      </div>
-      <button
-        className="btnsortear"
-        onClick={() => setIsRendering(!isRendering)}
-      >
-        {!isRendering ? "Sortear" : "Detener"}
-      </button>
+    <Confetti
+      style={!isRendering ? { display: "block" } : { display: "none" }}
+      width={width}
+      height={height}
+    />
+    <div className="contenedorNombre">
+      <h2 className="names">{isRendering ? nombre: nombresSeleccionados.map(persona => (
+              <div key={`${persona.Nombre}-${persona.Apellido}`}>
+                {`${persona.Nombre} ${persona.Apellido}`}
+                <br />
+              </div>
+            ))}</h2>
     </div>
+    <button className="btnsortear" onClick={seleccionarNombres}>
+      {!isRendering ? "Sortear" : "Detener"}
+    </button>
+  </div>
   );
 };
 
